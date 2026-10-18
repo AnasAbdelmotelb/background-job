@@ -7,6 +7,12 @@ from app.main import app
 
 
 @pytest.fixture(autouse=True)
+def instant_write(monkeypatch):
+    """The write-report step really waits 3 s; tests don't need to."""
+    monkeypatch.setattr("app.jobs.WRITE_SECONDS", 0)
+
+
+@pytest.fixture(autouse=True)
 def empty_store():
     store.REPORTS.clear()
     yield
