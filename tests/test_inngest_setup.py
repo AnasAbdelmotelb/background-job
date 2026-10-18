@@ -11,10 +11,10 @@ def test_inngest_endpoint_is_served_in_dev_mode():
     assert response.status_code == 200
     body = response.json()
     assert body["mode"] == "dev"
-    assert body["function_count"] == len(functions) == 1
+    assert body["function_count"] == len(functions) == 2
 
 
 def test_client_and_function_ids_match_the_brief():
     assert inngest_client.app_id == "report-api"
-    assert [fn.local_id for fn in functions] == ["say-hello"]
-    assert [fn.id for fn in functions] == ["report-api-say-hello"]  # Inngest prefixes the app id
+    assert [fn.local_id for fn in functions] == ["say-hello", "make-report"]
+    assert functions[0].id == "report-api-say-hello"  # Inngest prefixes the app id
