@@ -18,6 +18,12 @@ SLOW_WORK = timedelta(seconds=8)  # stand-in for real slow work: an AI call, a b
 RETRIES = 2  # 1 attempt + 2 retries = 3 attempts, then the run fails
 
 log = logging.getLogger("report-api")
+if not log.handlers:  # print this app's INFO lines (heartbeat summaries, alerts) in the API terminal
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+    log.addHandler(_handler)
+    log.setLevel(logging.INFO)
+    log.propagate = False
 
 
 @inngest_client.create_function(
@@ -66,4 +72,19 @@ async def make_report(ctx: inngest.Context) -> dict:
     return await ctx.step.run("build-report", lambda: build_report(report_id, topic))
 
 
-functions = [say_hello, make_report]
+HEARTBEAT_SCHEDULE = "* * * * *"  # every minute: for testing only; a real one would run daily, e.g. "0 8 * * *"
+
+
+@inngest_client.create_function(
+    fn_id="heartbeat",
+    trigger=inngest.TriggerCron(cron=HEARTBEAT_SCHEDULE),
+)
+async def heartbeat(ctx: inngest.Context) -> str:
+    """No request, no event: the clock starts this. Logs one summary line of the reports."""
+    counts = store.count_by_status()
+    summary = f"heartbeat: {counts['pending']} pending, {counts['done']} done, {counts['failed']} failed"
+    log.info(summary)
+    return summary
+
+
+functions = [say_hello, make_report, heartbeat]

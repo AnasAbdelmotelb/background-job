@@ -17,3 +17,10 @@ def create_report(topic: str) -> dict:
 
 def get_report(report_id: str) -> dict | None:
     return REPORTS.get(report_id)
+
+
+def count_by_status() -> dict[str, int]:
+    counts = {"pending": 0, "done": 0, "failed": 0}
+    for report in REPORTS.values():
+        counts[report["status"]] = counts.get(report["status"], 0) + 1
+    return counts
